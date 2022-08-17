@@ -17,7 +17,7 @@ type TelegramBot struct {
 	Storage TelegramStorage
 }
 
-func NewBot(token string, storage TelegramStorage) (*TelegramBot, error) {
+func NewTelegramBot(token string, storage TelegramStorage) (*TelegramBot, error) {
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		return nil, err
