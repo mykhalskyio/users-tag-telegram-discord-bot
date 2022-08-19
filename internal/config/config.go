@@ -19,7 +19,8 @@ type Config struct {
 	} `yaml:"telegram"`
 
 	Discord struct {
-		Token string `yaml:"token"`
+		Token  string `yaml:"token"`
+		Prefix string `yaml:"prefix"`
 	} `yaml:"discord"`
 }
 
