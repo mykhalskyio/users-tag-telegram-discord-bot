@@ -40,22 +40,22 @@ func (psql *Postgres) Insert(username string, chatId int) error {
 	return nil
 }
 
-func (psql *Postgres) GetAll(chatId int) (*[]entity.ChatUser, error) {
+func (psql *Postgres) GetAll(chatId int) (*[]entity.ChatUser, bool, error) {
 	users := []entity.ChatUser{}
 	err := psql.DB.Select(&users, "SELECT * FROM bobik WHERE chat_id = $1;", chatId)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
-	return &users, nil
+	return &users, true, nil
 }
 
-func (psql *Postgres) Get(username string, chatId int) (*entity.ChatUser, error) {
+func (psql *Postgres) Get(username string, chatId int) (*entity.ChatUser, bool, error) {
 	user := entity.ChatUser{}
 	err := psql.DB.Get(&user, "SELECT * FROM bobik WHERE username = $1 AND chat_id = $2;", username, chatId)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
-	return &user, nil
+	return &user, true, nil
 }
 
 func (psql *Postgres) Delete(username string, chatId int) error {
