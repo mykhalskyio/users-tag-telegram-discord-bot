@@ -22,6 +22,11 @@ type Config struct {
 		Token  string `yaml:"token"`
 		Prefix string `yaml:"prefix"`
 	} `yaml:"discord"`
+
+	Kafka struct {
+		Address string `yaml:"address"`
+		Topic   string `yaml:"topic"`
+	}
 }
 
 func GetConfig(path string) (*Config, string, error) {
