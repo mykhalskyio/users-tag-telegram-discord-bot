@@ -27,13 +27,14 @@ func NewPostgres(cfg *config.Config) (*Postgres, error) {
 	if err = pg.Ping(); err != nil {
 		return nil, err
 	}
-	defer pg.Close()
 	return &Postgres{
 		DB: pg,
 	}, nil
 }
 
-func (psql *Postgres) Insert(username string, chatId int) error {
+// telegram
+
+func (psql *Postgres) InsertUser(username string, chatId int) error {
 	_, err := psql.DB.Exec("INSERT INTO bobik(username, chat_id) VALUES($1, $2);", username, chatId)
 	if err != nil {
 		return err
@@ -41,7 +42,7 @@ func (psql *Postgres) Insert(username string, chatId int) error {
 	return nil
 }
 
-func (psql *Postgres) GetAll(chatId int) (*[]entity.ChatUser, bool, error) {
+func (psql *Postgres) GetAllUsers(chatId int) (*[]entity.ChatUser, bool, error) {
 	users := []entity.ChatUser{}
 	err := psql.DB.Select(&users, "SELECT * FROM bobik WHERE chat_id = $1;", chatId)
 	if err != nil {
@@ -50,7 +51,7 @@ func (psql *Postgres) GetAll(chatId int) (*[]entity.ChatUser, bool, error) {
 	return &users, true, nil
 }
 
-func (psql *Postgres) Get(username string, chatId int) (*entity.ChatUser, bool, error) {
+func (psql *Postgres) GetUser(username string, chatId int) (*entity.ChatUser, bool, error) {
 	user := entity.ChatUser{}
 	err := psql.DB.Get(&user, "SELECT * FROM bobik WHERE username = $1 AND chat_id = $2;", username, chatId)
 	if err != nil {
@@ -59,10 +60,30 @@ func (psql *Postgres) Get(username string, chatId int) (*entity.ChatUser, bool, 
 	return &user, true, nil
 }
 
-func (psql *Postgres) Delete(username string, chatId int) error {
+func (psql *Postgres) DeleteUser(username string, chatId int) error {
 	_, err := psql.DB.Exec("DELETE FROM bobik WHERE username = $1 AND chat_id = $2;", username, chatId)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func (psql *Postgres) GetDiscordChannelId(chatId int64) (*string, error) {
+	var channelId string
+	err := psql.DB.QueryRow("SELECT discord_channel_id FROM bridge WHERE telegram_chat_id = $1;", chatId).Scan(&channelId)
+	if err != nil {
+		return nil, err
+	}
+	return &channelId, nil
+}
+
+// discord
+
+func (psql *Postgres) GetTelegramChatId(guildId string) (*int64, error) {
+	var chatId int64
+	err := psql.DB.QueryRow("SELECT telegram_chat_id FROM bridge WHERE discord_guild_id = $1;", guildId).Scan(&chatId)
+	if err != nil {
+		return nil, err
+	}
+	return &chatId, nil
 }
