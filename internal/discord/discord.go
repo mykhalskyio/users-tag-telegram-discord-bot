@@ -1,13 +1,16 @@
 package discord
 
 import (
-	"log"
+	"encoding/json"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/mykhalskyio/users-tag-telegram-discord-bot/internal/entity"
+	"github.com/mykhalskyio/users-tag-telegram-discord-bot/pkg/queue"
 )
 
 type DiscordBot struct {
 	Api    *discordgo.Session
+	Queue  *queue.Queue
 	Prefix string
 }
 
@@ -15,7 +18,7 @@ var (
 	prefix string
 )
 
-func NewDiscordBot(token string, prefix string) (*DiscordBot, error) {
+func NewDiscordBot(token string, prefix string, queue *queue.Queue) (*DiscordBot, error) {
 	bot, err := discordgo.New("Bot " + token)
 	if err != nil {
 		return nil, err
@@ -23,25 +26,31 @@ func NewDiscordBot(token string, prefix string) (*DiscordBot, error) {
 
 	return &DiscordBot{
 		Api:    bot,
+		Queue:  queue,
 		Prefix: prefix,
 	}, nil
 }
 
 func (bot *DiscordBot) Start() {
-	bot.Api.AddHandler(messageHandler)
+	bot.Api.AddHandler(bot.setActivity)
+	bot.Api.AddHandler(bot.messageHandler)
 	prefix = bot.Prefix
 	bot.Api.Open()
-	log.Println("Bot start")
 }
 
-func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
+func (bot *DiscordBot) messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
 
 	switch m.Content {
 	case prefix + "ping":
-		s.ChannelMessageSend(m.ChannelID, "pong!")
+		s.ChannelMessageSend(m.ChannelID, m.GuildID)
+		msgJson, _ := json.Marshal(entity.Message{
+			Text:             "pong!",
+			Telegram_chat_id: 64,
+		})
+		bot.Queue.SendToQueue(msgJson)
 	case prefix + "isAdmin":
 		ok, _ := memberHasPermission(s, m.GuildID, m.Author.ID, discordgo.PermissionAdministrator)
 		if ok {
@@ -50,6 +59,10 @@ func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 			s.ChannelMessageSend(m.ChannelID, "False")
 		}
 	}
+}
+
+func (bot *DiscordBot) setActivity(s *discordgo.Session, m *discordgo.MessageCreate) {
+	s.UpdateGameStatus(1, "Cписок команд - !help")
 }
 
 func memberHasPermission(s *discordgo.Session, guildID string, userID string, permission int) (bool, error) {
