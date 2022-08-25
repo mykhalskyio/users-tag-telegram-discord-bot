@@ -20,3 +20,9 @@ func GetQueue(address string, topic string) (*Queue, error) {
 		Kafka: conn,
 	}, nil
 }
+
+func (q *Queue) SendToQueue(msg []byte) {
+	q.Kafka.WriteMessages(
+		kafka.Message{Value: msg},
+	)
+}
