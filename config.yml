@@ -1,2 +1,18 @@
-Postgres:
-  
+postgres:
+  port: 
+  host: 
+  user: 
+  pass: 
+  name: 
+  sslmode: 
+
+telegram:
+  token: 
+
+discord:
+  token: 
+  prefix: 
+
+kafka:
+  address: 
+  topic: 
