@@ -35,33 +35,13 @@ func (b *Bridge) Start(address string, topic string) {
 		MaxBytes: 10e6,
 	})
 
+	msgStruct := entity.Message{}
 	for {
 		msg, err := reader.ReadMessage(context.Background())
 		if err != nil {
 			log.Println(err)
 		}
-		fmt.Println(msg.Value)
+		json.Unmarshal(msg.Value, &msgStruct)
+		fmt.Println(msgStruct)
 	}
-}
-
-func (b *Bridge) SendDiscordQueue(channelId string, text string) {
-	msg := entity.Message{
-		Text:               text,
-		Discord_channel_id: channelId,
-	}
-	msgJson, _ := json.Marshal(msg)
-	b.Queue.Kafka.WriteMessages(
-		kafka.Message{Value: msgJson},
-	)
-}
-
-func (b *Bridge) SendTelegramQueue(chatId int64, text string) {
-	msg := entity.Message{
-		Text:             text,
-		Telegram_chat_id: chatId,
-	}
-	msgJson, _ := json.Marshal(msg)
-	b.Queue.Kafka.WriteMessages(
-		kafka.Message{Value: msgJson},
-	)
 }
